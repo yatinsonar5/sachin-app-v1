@@ -9,9 +9,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post("/headerfooter", (req, res) => {
   const header = req.body.header;
   const footer = req.body.footer;
-  console.log(header);
 
   if (header) {
+    console.log(header);
     fs.writeFile("1.html", `<html> ${header} </html>`, (err) => {
       if (err) {
         return res.status(500).send({
@@ -21,7 +21,9 @@ app.post("/headerfooter", (req, res) => {
         });
       }
     });
-  } else if (footer) {
+  }
+  if (footer) {
+    console.log(footer);
     fs.writeFile("2.html", `<html> ${footer} </html>`, (err) => {
       if (err) {
         return res.status(500).send({
@@ -31,7 +33,8 @@ app.post("/headerfooter", (req, res) => {
         });
       }
     });
-  } else {
+  }
+  if (!header && !footer) {
     return res.status(400).json({
       code: 400,
       status: "Bad Request",
@@ -63,7 +66,8 @@ app.post("/upload", upload.single("image"), (req, res) => {
     res.status(400).send({
       code: 400,
       status: "Bad Request",
-      message: "Please select an image to upload."});
+      message: "Please select an image to upload.",
+    });
   } else {
     res.send({
       code: 200,
@@ -76,10 +80,21 @@ app.post("/upload", upload.single("image"), (req, res) => {
 
 //Login
 const jwt = require("jsonwebtoken");
+app.use(express.json());
+
+const SECRET_KEY = "yoursecretkey";
 
 const users = [
-  { username: "john", password: "john123" },
-  { username: "tom", password: "tom123" },
+  {
+    id: 1,
+    username: "user1",
+    password: "password1",
+  },
+  {
+    id: 2,
+    username: "user2",
+    password: "password2",
+  },
 ];
 
 // Route to handle login
@@ -97,14 +112,13 @@ app.post("/login", (req, res) => {
       error: "Incorrect username or password",
     });
   }
-
   // Create JWT token
-  const token = jwt.sign({ sub: user.username }, "secret_key");
-
+  const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: "1h" });
   // Return token in response
   res.send({
     code: 200,
     status: "Success",
+    data: user,
     token,
   });
 });
