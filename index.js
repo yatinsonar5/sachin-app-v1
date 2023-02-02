@@ -1,20 +1,32 @@
 const express = require("express");
 const fs = require("fs");
 const bodyParser = require("body-parser");
-
+const cors = require("cors");
 const app = express();
+
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Cors Handling
+
+app.use(cors());
+
+const corsOptions = {
+  origin: ["http://example.com", "http://example2.com"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.use(cors(corsOptions));
+
 //Posting Header Footer Content
-app.post("/headerfooter", (req, res) => {
+app.post("/api/headerfooter", (req, res) => {
   const header = req.body.header;
   const footer = req.body.footer;
 
   if (header) {
     console.log(header);
-    fs.writeFile("1.html", `<html> ${header} </html>`, (err) => {
+    fs.writeFile("./public/html/1.html", `<html> ${header} </html>`, (err) => {
       if (err) {
-        return res.status(500).send({
+        return res.status(500).end({
           code: 500,
           status: "Internal Server Error",
           error: "Error writing to file",
@@ -24,7 +36,7 @@ app.post("/headerfooter", (req, res) => {
   }
   if (footer) {
     console.log(footer);
-    fs.writeFile("2.html", `<html> ${footer} </html>`, (err) => {
+    fs.writeFile("./public/html/2.html", `<html> ${footer} </html>`, (err) => {
       if (err) {
         return res.status(500).send({
           code: 500,
@@ -60,7 +72,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-app.post("/upload", upload.single("image"), (req, res) => {
+app.post("/api/upload", upload.single("image"), (req, res) => {
   const file = req.file;
   if (!file) {
     res.status(400).send({
@@ -98,7 +110,7 @@ const users = [
 ];
 
 // Route to handle login
-app.post("/login", (req, res) => {
+app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
 
   // Check if user exists
