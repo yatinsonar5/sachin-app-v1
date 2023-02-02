@@ -2,6 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const path = require("path");
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,15 +20,14 @@ app.use(cors(corsOptions));
 
 //Creating path to access html files
 
-const path = require("path");
-app.use(express.static(path.join(__dirname, "/public/html")));
+app.use(express.static(path.join(__dirname, "/html")));
 
-app.get("/api/1.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/html/1.html"));
+app.get("/1.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "/html/1.html"));
 });
 
-app.get("/api/2.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/html/2.html"));
+app.get("/2.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "/html/2.html"));
 });
 
 //Posting Header Footer Content
@@ -38,7 +38,7 @@ app.post("/api/headerfooter", (req, res) => {
 
   if (header) {
     console.log(header);
-    fs.writeFile("./public/html/1.html", `<html> ${header} </html>`, (err) => {
+    fs.writeFile("./html/1.html", `<html> ${header} </html>`, (err) => {
       if (err) {
         return res.status(500).end({
           code: 500,
@@ -50,7 +50,7 @@ app.post("/api/headerfooter", (req, res) => {
   }
   if (footer) {
     console.log(footer);
-    fs.writeFile("./public/html/2.html", `<html> ${footer} </html>`, (err) => {
+    fs.writeFile("./html/2.html", `<html> ${footer} </html>`, (err) => {
       if (err) {
         return res.status(500).send({
           code: 500,
@@ -78,7 +78,7 @@ app.post("/api/headerfooter", (req, res) => {
 const multer = require("multer");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/images/");
+    cb(null, "./images/");
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + "-" + file.originalname);
