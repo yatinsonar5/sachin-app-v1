@@ -98,12 +98,12 @@ const SECRET_KEY = "yoursecretkey";
 
 const users = [
   {
-    id: 1,
+    userId: 1,
     username: "user1",
     password: "password1",
   },
   {
-    id: 2,
+    userId: 2,
     username: "user2",
     password: "password2",
   },
@@ -125,12 +125,12 @@ app.post("/api/login", (req, res) => {
     });
   }
   // Create JWT token
-  const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: "1h" });
+  const token = jwt.sign({ userId: user.userId }, SECRET_KEY, { expiresIn: "1h" });
   // Return token in response
   res.send({
     code: 200,
     status: "Success",
-    data: user,
+    userId: user.userId,
     token,
   });
 });
