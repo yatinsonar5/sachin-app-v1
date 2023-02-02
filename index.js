@@ -17,7 +17,21 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+//Creating path to access html files
+
+const path = require("path");
+app.use(express.static(path.join(__dirname, "/public/html")));
+
+app.get("/api/1.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/html/1.html"));
+});
+
+app.get("/api/2.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/html/2.html"));
+});
+
 //Posting Header Footer Content
+
 app.post("/api/headerfooter", (req, res) => {
   const header = req.body.header;
   const footer = req.body.footer;
@@ -125,7 +139,9 @@ app.post("/api/login", (req, res) => {
     });
   }
   // Create JWT token
-  const token = jwt.sign({ userId: user.userId }, SECRET_KEY, { expiresIn: "1h" });
+  const token = jwt.sign({ userId: user.userId }, SECRET_KEY, {
+    expiresIn: "1h",
+  });
   // Return token in response
   res.send({
     code: 200,
