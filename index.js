@@ -76,7 +76,7 @@ app.post("/api/headerfooter", (req, res) => {
 
 //Post Url
 
-app.post("/api/url", (req, res) => {
+app.post("/api/opentab", (req, res) => {
   if (!Object.keys(req.body).length) {
     res.status(400).send({
       code: 400,
@@ -106,7 +106,7 @@ app.post("/api/url", (req, res) => {
 
 // Get UrlData
 
-app.get("/api/url", (req, res) => {
+app.get("/opentab", (req, res) => {
   fs.readFile("./text/url.txt", "utf-8", (err, urlData) => {
     if (err) {
       res.status(500).send({
@@ -127,7 +127,7 @@ app.get("/api/url", (req, res) => {
     res.status(200).send({
         code: 200,
         status: "Success",
-        message: "Fetched Url Data Successfully",
+        message: "Url Data Fetched Successfully",
         data: JSON.parse(urlData),
       });
   });
