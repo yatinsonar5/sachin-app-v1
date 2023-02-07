@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const app = express();
+const dotenv = require("dotenv");
+dotenv.config();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -11,9 +13,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
-const MongoURI =
-  "mongodb+srv://sachin-App:IX4ovYyGMqo8fv6c@cluster0.wmqic.mongodb.net/sachin-App?retryWrites=true&w=majority";
-const LOCALURI = "mongodb://127.0.0.1:27017/sachin-App";
+const MongoURI = process.env.MongoURI
+const LOCALURI = process.env.LOCALURI;
 
 mongoose.connect(MongoURI, { useNewUrlParser: true });
 
@@ -447,7 +448,7 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
