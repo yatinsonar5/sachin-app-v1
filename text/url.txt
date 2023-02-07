@@ -1,1 +1,1 @@
-{"url":"www.google.com","time":"10","url_status":"true"}
+{"url":"www.google.com","time":"10","open_tab_status":"true"}

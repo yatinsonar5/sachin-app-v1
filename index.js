@@ -7,6 +7,16 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Database Connections
+
+const mongoose = require("mongoose");
+mongoose.set("strictQuery", false);
+const MongoURI =
+  "mongodb+srv://sachin-App:IX4ovYyGMqo8fv6c@cluster0.wmqic.mongodb.net/sachin-App?retryWrites=true&w=majority";
+const LOCALURI = "mongodb://127.0.0.1:27017/sachin-App";
+
+mongoose.connect(MongoURI, { useNewUrlParser: true });
+
 // Cors Handling
 
 app.use(cors());
@@ -75,6 +85,66 @@ app.post("/api/headerfooter", (req, res) => {
 });
 
 //Post Url
+// const openTab = require("./models/opentab_model");
+
+// app.post("/api/opentab", async (req, res) => {
+//   const urlData = new openTab(req.body);
+
+//   openTab.findOne({ url: urlData.url }, (err, result) => {
+//     if (err) {
+//       res.status(500).send({
+//         code: 500,
+//         status: "Internal Server Error",
+//         message: "Failed to connect with Database",
+//       });
+//     }
+//     if (!result) {
+//       const newopenTab = new openTab(urlData);
+//       newopenTab.save((err, result) => {
+//         if (err) {
+//           res.status(500).send({
+//             code: 500,
+//             status: "Internal Server Error",
+//             message: "Failed to save URL data in Database",
+//           });
+//         } else {
+//           res.status(201).send({
+//             code: 201,
+//             status: "Created",
+//             message: "URL data created and saved in Database Successfully",
+//             data: result,
+//           });
+//         }
+//       });
+//     } else if (result) {
+//       openTab.updateOne(
+//         {
+//           url: urlData.url,
+//         },
+//         {
+//           time: urlData.time,
+//           open_tab_status: urlData.open_tab_status,
+//         },
+//         (err, result) => {
+//           if (err) {
+//             res.status(500).send({
+//               code: 500,
+//               status: "Internal Server Error",
+//               message: "Failed to connect to database to update URL data",
+//             });
+//           } else {
+//             res.status(200).send({
+//               code: 200,
+//               status: "Success",
+//               message: "URL Data updated Successfully",
+//               data: result,
+//             });
+//           }
+//         }
+//       );
+//     }
+//   });
+// });
 
 app.post("/api/opentab", (req, res) => {
   if (!Object.keys(req.body).length) {
@@ -105,6 +175,31 @@ app.post("/api/opentab", (req, res) => {
 });
 
 // Get UrlData
+// app.get("/opentab", (req, res) => {
+//   const url = req.query.url;
+//   openTab.findOne({ url: url }, (err, result) => {
+//     if (err) {
+//       res.status(500).send({
+//         code: 500,
+//         status: "Internal Server Error",
+//         message: "Not able to connect with database",
+//       });
+//     } else if (!result) {
+//       res.status(404).send({
+//         code: 404,
+//         status: "Not Found",
+//         message: "Url Data not found in database",
+//       });
+//     } else {
+//       res.status(200).send({
+//         code: 200,
+//         status: "Success",
+//         message: "Url Data fetched Successfully",
+//         data: result,
+//       });
+//     }
+//   });
+// });
 
 app.get("/opentab", (req, res) => {
   fs.readFile("./text/url.txt", "utf-8", (err, urlData) => {
@@ -125,12 +220,41 @@ app.get("/opentab", (req, res) => {
       return;
     }
     res.status(200).send({
-        code: 200,
-        status: "Success",
-        message: "Url Data Fetched Successfully",
-        data: JSON.parse(urlData),
-      });
+      code: 200,
+      status: "Success",
+      message: "Url Data Fetched Successfully",
+      data: JSON.parse(urlData),
+    });
   });
+});
+
+// Get all details
+
+app.get("/getDetails", (req, res) => {
+  const header = fs.readFileSync("./html/1.html", "utf-8");
+  const footer = fs.readFileSync("./html/2.html", "utf-8");
+  const urlData = fs.readFileSync("./text/url.txt", "utf8");
+
+  if (!header && !footer && !urlData) {
+    res.status(404).send({
+      code: 404,
+      status: "Not Found",
+      header_status: false,
+      header_text: "header data is not available",
+      footer_status: false,
+      footer_text: "footer data is not available",
+      open_tab_data: "urlData is not available",
+    });
+  } else if (header && footer && urlData)
+    res.status(200).send({
+      code: 200,
+      status: "Success",
+      header_status: true,
+      header_text: header,
+      footer_status: true,
+      footer_text: footer,
+      open_tab_data: JSON.parse(urlData),
+    });
 });
 
 // Image Upload on S3 bucket
@@ -216,49 +340,110 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 });
 
 //Login
+
+// const jwt = require("jsonwebtoken");
+// app.use(express.json());
+
+// const SECRET_KEY = "yoursecretkey";
+
+// const users = [
+//   {
+//     userId: 1,
+//     username: "user1",
+//     password: "password1",
+//   },
+//   {
+//     userId: 2,
+//     username: "user2",
+//     password: "password2",
+//   },
+// ];
+
+// // Route to handle login
+// app.post("/api/login", (req, res) => {
+//   const { username, password } = req.body;
+
+//   // Check if user exists
+//   const user = users.find(
+//     (u) => u.username === username && u.password === password
+//   );
+//   if (!user) {
+//     return res.status(401).send({
+//       code: 401,
+//       status: "Unauthorized",
+//       error: "Incorrect username or password",
+//     });
+//   }
+//   // Create JWT token
+//   const token = jwt.sign({ userId: user.userId }, SECRET_KEY, {
+//     expiresIn: "1h",
+//   });
+//   // Return token in response
+//   res.send({
+//     code: 200,
+//     status: "Success",
+//     userId: user.userId,
+//     token,
+//   });
+// });
+
 const jwt = require("jsonwebtoken");
-app.use(express.json());
+const secretKey = "your-secret-key";
+const User = require("./models/login_model");
 
-const SECRET_KEY = "yoursecretkey";
-
-const users = [
-  {
-    userId: 1,
-    username: "user1",
-    password: "password1",
-  },
-  {
-    userId: 2,
-    username: "user2",
-    password: "password2",
-  },
-];
-
-// Route to handle login
 app.post("/api/login", (req, res) => {
-  const { username, password } = req.body;
-
-  // Check if user exists
-  const user = users.find(
-    (u) => u.username === username && u.password === password
-  );
-  if (!user) {
-    return res.status(401).send({
-      code: 401,
-      status: "Unauthorized",
-      error: "Incorrect username or password",
-    });
-  }
-  // Create JWT token
-  const token = jwt.sign({ userId: user.userId }, SECRET_KEY, {
-    expiresIn: "1h",
-  });
-  // Return token in response
-  res.send({
-    code: 200,
-    status: "Success",
-    userId: user.userId,
-    token,
+  User.findOne({ username: req.body.username }, (error, user) => {
+    if (error) {
+      res.status(500).send({
+        code: 500,
+        status: "Internal Server Error",
+        message: "Not able to find User",
+      });
+    } else if (!user) {
+      const newUser = new User({
+        username: req.body.username,
+        password: req.body.password,
+      });
+      newUser.save((error) => {
+        if (error) {
+          res.status(500).send(error);
+        } else {
+          const token = jwt.sign({ id: newUser._id }, secretKey, {
+            expiresIn: "1h",
+          });
+          res.status(200).send({
+            code: 200,
+            status: "Success",
+            message: "User Created Successfully",
+            userId: newUser._id,
+            token,
+          });
+        }
+      });
+    } else if (
+      user.username == req.body.username &&
+      user.password !== req.body.password
+    ) {
+      res.status(401).send({
+        code: 401,
+        status: "Unauthorized",
+        message: "Incorrect Password",
+      });
+    } else if (
+      user.username === req.body.username &&
+      user.password === req.body.password
+    ) {
+      const token = jwt.sign({ id: user._id }, secretKey, {
+        expiresIn: "1h",
+      });
+      res.status(200).send({
+        code: 200,
+        status: "Success",
+        message: "User LoggedIn Successfully",
+        userId: user._id,
+        token,
+      });
+    }
   });
 });
 
