@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
 
 // Database Connections
 
@@ -148,7 +149,9 @@ app.post("/api/headerfooter", (req, res) => {
 // });
 
 app.post("/api/opentab", (req, res) => {
-  if (!Object.keys(req.body).length) {
+  let urlData= req.body;
+  console.log(urlData)
+  if (!Object.keys(urlData).length) {
     res.status(400).send({
       code: 400,
       status: "Bad Request",
@@ -156,7 +159,7 @@ app.post("/api/opentab", (req, res) => {
     });
     return;
   }
-  let urlData = req.body;
+  
   fs.writeFile("./text/url.txt", JSON.stringify(urlData), (err) => {
     if (err) {
       res.status(500).send({
@@ -202,7 +205,7 @@ app.post("/api/opentab", (req, res) => {
 //   });
 // });
 
-app.get("/opentab", (req, res) => {
+app.get("/api/opentab", (req, res) => {
   fs.readFile("./text/url.txt", "utf-8", (err, urlData) => {
     if (err) {
       res.status(500).send({
@@ -231,7 +234,7 @@ app.get("/opentab", (req, res) => {
 
 // Get all details
 
-app.get("/getDetails", (req, res) => {
+app.get("/api/getDetails", (req, res) => {
   const header = fs.readFileSync("./html/1.html", "utf-8");
   const footer = fs.readFileSync("./html/2.html", "utf-8");
   const urlData = fs.readFileSync("./text/url.txt", "utf8");
