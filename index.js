@@ -46,10 +46,11 @@ app.get("/2.html", (req, res) => {
 
 app.post("/api/headerfooter", (req, res) => {
   const header = req.body.header;
+  const header_status = req.body.header_status;
   const footer = req.body.footer;
+  const footer_status = req.body.footer_status;
 
   if (header) {
-    console.log(header);
     fs.writeFile("./html/1.html", `<html> ${header} </html>`, (err) => {
       if (err) {
         return res.status(500).end({
@@ -61,7 +62,6 @@ app.post("/api/headerfooter", (req, res) => {
     });
   }
   if (footer) {
-    console.log(footer);
     fs.writeFile("./html/2.html", `<html> ${footer} </html>`, (err) => {
       if (err) {
         return res.status(500).send({
@@ -72,7 +72,28 @@ app.post("/api/headerfooter", (req, res) => {
       }
     });
   }
-  if (!header && !footer) {
+  if (header_status && footer_status) {
+    fs.writeFile("./text/header_status.txt", JSON.stringify(header_status), (err) => {
+        if (err) {
+          res.status(500).send({
+            code: 500,
+            status: "Internal Server Error",
+            message: "Failed to send header_status",
+          });
+        }
+      }
+    );
+    fs.writeFile("./text/footer_status.txt", JSON.stringify(footer_status), (err) => {
+        if (err) {
+          res.status(500).send({
+            code: 500,
+            status: "Internal Server Error",
+            message: "Failed to send footer_status",
+          });
+        }
+      }
+    );
+  } if (!header && !footer) {
     return res.status(400).json({
       code: 400,
       status: "Bad Request",
@@ -83,6 +104,12 @@ app.post("/api/headerfooter", (req, res) => {
     code: 200,
     status: "Success",
     message: "Data written successfully",
+    data: {
+      header: header,
+      header_status: header_status,
+      footer: footer,
+      footer_status: footer_status,
+    },
   });
 });
 
@@ -149,8 +176,8 @@ app.post("/api/headerfooter", (req, res) => {
 // });
 
 app.post("/api/opentab", (req, res) => {
-  let urlData= req.body;
-  console.log(urlData)
+  let urlData = req.body;
+  // console.log(urlData)
   if (!Object.keys(urlData).length) {
     res.status(400).send({
       code: 400,
@@ -159,7 +186,7 @@ app.post("/api/opentab", (req, res) => {
     });
     return;
   }
-  
+
   fs.writeFile("./text/url.txt", JSON.stringify(urlData), (err) => {
     if (err) {
       res.status(500).send({
@@ -179,7 +206,7 @@ app.post("/api/opentab", (req, res) => {
 });
 
 // Get UrlData
-// app.get("/opentab", (req, res) => {
+// app.get("/api/opentab", (req, res) => {
 //   const url = req.query.url;
 //   openTab.findOne({ url: url }, (err, result) => {
 //     if (err) {
@@ -235,17 +262,23 @@ app.get("/api/opentab", (req, res) => {
 // Get all details
 
 app.get("/api/getDetails", (req, res) => {
-  const header = fs.readFileSync("./html/1.html", "utf-8");
-  const footer = fs.readFileSync("./html/2.html", "utf-8");
+  const data1 = fs.readFileSync("./html/1.html", "utf-8");
+  const header = data1.replace(/<\/?(html)[^>]*>/gi, '')
+  const header_status = fs.readFileSync("./text/header_status.txt", "utf8");
+  const data2 = fs.readFileSync("./html/2.html", "utf-8");
+  const footer = data2.replace(/<\/?(html)[^>]*>/gi, '')
+  const footer_status = fs.readFileSync("./text/footer_status.txt", "utf8");
   const urlData = fs.readFileSync("./text/url.txt", "utf8");
+  
+
 
   if (!header && !footer && !urlData) {
     res.status(404).send({
       code: 404,
       status: "Not Found",
-      header_status: false,
+      header_status: JSON.parse(header_status),
       header_text: "header data is not available",
-      footer_status: false,
+      footer_status: JSON.parse(footer_status),
       footer_text: "footer data is not available",
       open_tab_data: "urlData is not available",
     });
@@ -253,9 +286,9 @@ app.get("/api/getDetails", (req, res) => {
     res.status(200).send({
       code: 200,
       status: "Success",
-      header_status: true,
+      header_status: JSON.parse(header_status),
       header_text: header,
-      footer_status: true,
+      footer_status: JSON.parse(footer_status),
       footer_text: footer,
       open_tab_data: JSON.parse(urlData),
     });
