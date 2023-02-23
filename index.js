@@ -19,7 +19,6 @@ const LOCALURI = process.env.LOCALURI;
 
 mongoose.connect(MongoURI, { useNewUrlParser: true });
 
-
 // Cors Handling
 
 app.use(cors());
@@ -331,14 +330,15 @@ app.get("/api/defaultsettings", (req, res) => {
 
 app.get("/api/getDetails", (req, res) => {
   const data1 = fs.readFileSync("./html/1.html", "utf-8");
-  const header = data1.replace(/<\/?(html)[^>]*>/gi, "");
+  const header = data1.replace(/<\/?(html)[^>]*>/gi, "").trim();
   const header_status = fs.readFileSync("./text/header_status.txt", "utf8");
   const data2 = fs.readFileSync("./html/2.html", "utf-8");
-  const footer = data2.replace(/<\/?(html)[^>]*>/gi, "");
+  const footer = data2.replace(/<\/?(html)[^>]*>/gi, "").trim();
   const footer_status = fs.readFileSync("./text/footer_status.txt", "utf8");
   const urlData = fs.readFileSync("./text/url.txt", "utf8");
+  const defaultsettings = fs.readFileSync("./text/default.txt", "utf8");
 
-  if (!header && !footer && !urlData) {
+  if (!header && !footer && !urlData && !defaultsettings) {
     res.status(404).send({
       code: 404,
       status: "Not Found",
@@ -347,16 +347,20 @@ app.get("/api/getDetails", (req, res) => {
       footer_status: JSON.parse(footer_status),
       footer_text: "footer data is not available",
       open_tab_data: "urlData is not available",
+      default_settings_data: "Default Settings Data is not available",
     });
-  } else if (header && footer && urlData)
+  } else if (header && footer && urlData && defaultsettings)
     res.status(200).send({
       code: 200,
       status: "Success",
-      header_status: JSON.parse(header_status),
-      header_text: header,
-      footer_status: JSON.parse(footer_status),
-      footer_text: footer,
+      header_footer_data: {
+        header_status: JSON.parse(header_status),
+        header_text: header,
+        footer_status: JSON.parse(footer_status),
+        footer_text: footer,
+      },
       open_tab_data: JSON.parse(urlData),
+      default_settings_data: JSON.parse(defaultsettings),
     });
 });
 
@@ -444,37 +448,36 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 
 // Get Installed Reports
 
-const macUserId = require("./models/mac-id")
+const macUserId = require("./models/mac-id");
 
-app.get("/installedreports", (req,res) =>{
+app.get("/installedreports", (req, res) => {
   const macId = req.body.macId; // get the user id from the query string
   let count = 1; // initialize the count to 1
 
-  macUserId.findOne({macId:macId}, (err, user) =>{
-    if(err){
-      res.status(500).send('Error finding user')
-    } if (user){
-      count = user.count
-      count ++
+  macUserId.findOne({ macId: macId }, (err, user) => {
+    if (err) {
+      res.status(500).send("Error finding user");
+    }
+    if (user) {
+      count = user.count;
+      count++;
       res.send(`User ${macId} has visited the API ${count} times.`);
-    } 
-    if(!user) {
+    }
+    if (!user) {
       // the user does not exist, so create a new user and set the count to 1
       const newUser = new macUserId({ macId: macId, count });
-      console.log(newUser)
+      console.log(newUser);
       newUser.save((err) => {
         if (err) {
           // handle the error
-          return res.status(500).send('Error saving user');
+          return res.status(500).send("Error saving user");
         } else {
-          res.send("user added")
+          res.send("user added");
         }
       });
-    } 
-  })
-})
-
-
+    }
+  });
+});
 
 //Login
 
