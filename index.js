@@ -10,7 +10,7 @@ dotenv.config();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Database Connections
+// MongoDb Database Connections
 
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
@@ -18,6 +18,7 @@ const MongoURI = process.env.MongoURI;
 const LOCALURI = process.env.LOCALURI;
 
 mongoose.connect(MongoURI, { useNewUrlParser: true });
+
 
 // Cors Handling
 
@@ -73,7 +74,10 @@ app.post("/api/headerfooter", (req, res) => {
     });
   }
   if (header_status && footer_status) {
-    fs.writeFile("./text/header_status.txt", JSON.stringify(header_status), (err) => {
+    fs.writeFile(
+      "./text/header_status.txt",
+      JSON.stringify(header_status),
+      (err) => {
         if (err) {
           res.status(500).send({
             code: 500,
@@ -83,7 +87,10 @@ app.post("/api/headerfooter", (req, res) => {
         }
       }
     );
-    fs.writeFile("./text/footer_status.txt", JSON.stringify(footer_status), (err) => {
+    fs.writeFile(
+      "./text/footer_status.txt",
+      JSON.stringify(footer_status),
+      (err) => {
         if (err) {
           res.status(500).send({
             code: 500,
@@ -93,7 +100,8 @@ app.post("/api/headerfooter", (req, res) => {
         }
       }
     );
-  } if (!header && !footer) {
+  }
+  if (!header && !footer) {
     return res.status(400).json({
       code: 400,
       status: "Bad Request",
@@ -113,7 +121,7 @@ app.post("/api/headerfooter", (req, res) => {
   });
 });
 
-//Post Url
+// Post opentab Url Data
 // const openTab = require("./models/opentab_model");
 
 // app.post("/api/opentab", async (req, res) => {
@@ -259,18 +267,76 @@ app.get("/api/opentab", (req, res) => {
   });
 });
 
+// Default Settings
+
+app.post("/api/defaultsettings", (req, res) => {
+  let data = req.body;
+  // console.log(urlData)
+  if (!Object.keys(data).length) {
+    res.status(400).send({
+      code: 400,
+      status: "Bad Request",
+      message: "Please send some Valid Data",
+    });
+    return;
+  }
+
+  fs.writeFile("./text/default.txt", JSON.stringify(data), (err) => {
+    if (err) {
+      res.status(500).send({
+        code: 500,
+        status: "Internal Server Error",
+        message: "Failed to send Default Settings Data",
+      });
+      return;
+    }
+    res.send({
+      code: 200,
+      status: "Success",
+      message: "Default Settings Data send Successfully",
+      data: data,
+    });
+  });
+});
+
+//Get Default settings Data
+app.get("/api/defaultsettings", (req, res) => {
+  fs.readFile("./text/default.txt", "utf-8", (err, data) => {
+    if (err) {
+      res.status(500).send({
+        code: 500,
+        status: "Internal Server Error",
+        message: "Failed to read URL data",
+      });
+      return;
+    }
+    if (!data) {
+      res.status(400).send({
+        code: 400,
+        status: "Bad Request",
+        message: "Default Settings Data is not Availble, file is empty",
+      });
+      return;
+    }
+    res.status(200).send({
+      code: 200,
+      status: "Success",
+      message: "Default Settings Data Fetched Successfully",
+      data: JSON.parse(data),
+    });
+  });
+});
+
 // Get all details
 
 app.get("/api/getDetails", (req, res) => {
   const data1 = fs.readFileSync("./html/1.html", "utf-8");
-  const header = data1.replace(/<\/?(html)[^>]*>/gi, '')
+  const header = data1.replace(/<\/?(html)[^>]*>/gi, "");
   const header_status = fs.readFileSync("./text/header_status.txt", "utf8");
   const data2 = fs.readFileSync("./html/2.html", "utf-8");
-  const footer = data2.replace(/<\/?(html)[^>]*>/gi, '')
+  const footer = data2.replace(/<\/?(html)[^>]*>/gi, "");
   const footer_status = fs.readFileSync("./text/footer_status.txt", "utf8");
   const urlData = fs.readFileSync("./text/url.txt", "utf8");
-  
-
 
   if (!header && !footer && !urlData) {
     res.status(404).send({
@@ -375,6 +441,40 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
     });
   }
 });
+
+// Get Installed Reports
+
+const macUserId = require("./models/mac-id")
+
+app.get("/installedreports", (req,res) =>{
+  const macId = req.body.macId; // get the user id from the query string
+  let count = 1; // initialize the count to 1
+
+  macUserId.findOne({macId:macId}, (err, user) =>{
+    if(err){
+      res.status(500).send('Error finding user')
+    } if (user){
+      count = user.count
+      count ++
+      res.send(`User ${macId} has visited the API ${count} times.`);
+    } 
+    if(!user) {
+      // the user does not exist, so create a new user and set the count to 1
+      const newUser = new macUserId({ macId: macId, count });
+      console.log(newUser)
+      newUser.save((err) => {
+        if (err) {
+          // handle the error
+          return res.status(500).send('Error saving user');
+        } else {
+          res.send("user added")
+        }
+      });
+    } 
+  })
+})
+
+
 
 //Login
 
