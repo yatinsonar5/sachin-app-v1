@@ -206,7 +206,7 @@ app.post("/api/opentab", (req, res) => {
     res.send({
       code: 200,
       status: "Success",
-      message: "Url Data send Successfully",
+      message: "Data Saved Successfully",
       data: urlData,
     });
   });
