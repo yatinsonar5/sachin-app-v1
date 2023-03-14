@@ -1,12 +1,15 @@
 const mongoose = require("mongoose");
 
-const macUserIdSchema = new mongoose.Schema({
+const macUserSchema = new mongoose.Schema({
   macId: {
     type: String,
+    required: true,
+    unique: true,
   },
-  count:{
-    type: Number
-  }
+  hitCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
-module.exports = mongoose.model("macUserId", macUserIdSchema);
+module.exports = mongoose.model("macUser", macUserSchema);

@@ -1,26 +1,18 @@
 const express = require("express");
-const fs = require("fs");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const path = require("path");
 const app = express();
-const dotenv = require("dotenv");
-dotenv.config();
+const bodyParser = require("body-parser");
+const path = require("path");
+const db = require("./db/db");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-// MongoDb Database Connections
-
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", false);
-const MongoURI = process.env.MongoURI;
-const LOCALURI = process.env.LOCALURI;
-
-mongoose.connect(MongoURI, { useNewUrlParser: true });
+// Environment Variable configuration
+const dotenv = require("dotenv");
+dotenv.config();
 
 // Cors Handling
-
+const cors = require("cors");
 app.use(cors());
 
 const corsOptions = {
@@ -30,565 +22,85 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+//Cache Control
+
+// const nocache = require("nocache");
+// app.use(nocache());
+
+app.get("/", (req, res) => {
+  res.send("Hello, This API is Working");
+});
+
 //Creating path to access html files
 
 app.use(express.static(path.join(__dirname, "/html")));
 
-app.get("/1.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "/html/1.html"));
+app.get("/header.html", (req, res) => {
+  // Set the Cache-Control header to no-cache
+  res.setHeader("Cache-Control", "no-cache");
+  res.sendFile(path.join(__dirname, "/html/header.html"));
 });
 
-app.get("/2.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "/html/2.html"));
+app.get("/footer.html", (req, res) => {
+  // Set the Cache-Control header to no-cache
+  res.setHeader("Cache-Control", "no-cache");
+  res.sendFile(path.join(__dirname, "/html/footer.html"));
+});
+
+app.get("/headerbnanner.html", (req, res) => {
+  // Set the Cache-Control header to no-cache
+  res.setHeader("Cache-Control", "no-cache");
+  res.sendFile(path.join(__dirname, "/html/headernanner.html"));
 });
 
 //Posting Header Footer Content
+const headerfooterRoute = require("./routes/headerfooter.route");
+app.use("/", headerfooterRoute);
 
-app.post("/api/headerfooter", (req, res) => {
-  const header = req.body.header;
-  const header_status = req.body.header_status;
-  const footer = req.body.footer;
-  const footer_status = req.body.footer_status;
+// Opentab Url Data
+const opentabRoute = require("./routes/opentab.route");
+app.use("/", opentabRoute);
 
-  if (header) {
-    fs.writeFile("./html/1.html", `<html> ${header} </html>`, (err) => {
-      if (err) {
-        return res.status(500).end({
-          code: 500,
-          status: "Internal Server Error",
-          error: "Error writing to file",
-        });
-      }
-    });
-  }
-  if (footer) {
-    fs.writeFile("./html/2.html", `<html> ${footer} </html>`, (err) => {
-      if (err) {
-        return res.status(500).send({
-          code: 500,
-          status: "Internal Server Error",
-          error: "Error writing to file",
-        });
-      }
-    });
-  }
-  if (header_status && footer_status) {
-    fs.writeFile(
-      "./text/header_status.txt",
-      JSON.stringify(header_status),
-      (err) => {
-        if (err) {
-          res.status(500).send({
-            code: 500,
-            status: "Internal Server Error",
-            message: "Failed to send header_status",
-          });
-        }
-      }
-    );
-    fs.writeFile(
-      "./text/footer_status.txt",
-      JSON.stringify(footer_status),
-      (err) => {
-        if (err) {
-          res.status(500).send({
-            code: 500,
-            status: "Internal Server Error",
-            message: "Failed to send footer_status",
-          });
-        }
-      }
-    );
-  }
-  if (!header && !footer) {
-    return res.status(400).json({
-      code: 400,
-      status: "Bad Request",
-      message: "Both header and footer are not available",
-    });
-  }
-  res.send({
-    code: 200,
-    status: "Success",
-    message: "Data written successfully",
-    data: {
-      header: header,
-      header_status: header_status,
-      footer: footer,
-      footer_status: footer_status,
-    },
-  });
-});
+// Default settings Data
+const defaultsettingsRoute = require("./routes/defaultSetting.route");
+app.use("/", defaultsettingsRoute);
 
-// Post opentab Url Data
-// const openTab = require("./models/opentab_model");
-
-// app.post("/api/opentab", async (req, res) => {
-//   const urlData = new openTab(req.body);
-
-//   openTab.findOne({ url: urlData.url }, (err, result) => {
-//     if (err) {
-//       res.status(500).send({
-//         code: 500,
-//         status: "Internal Server Error",
-//         message: "Failed to connect with Database",
-//       });
-//     }
-//     if (!result) {
-//       const newopenTab = new openTab(urlData);
-//       newopenTab.save((err, result) => {
-//         if (err) {
-//           res.status(500).send({
-//             code: 500,
-//             status: "Internal Server Error",
-//             message: "Failed to save URL data in Database",
-//           });
-//         } else {
-//           res.status(201).send({
-//             code: 201,
-//             status: "Created",
-//             message: "URL data created and saved in Database Successfully",
-//             data: result,
-//           });
-//         }
-//       });
-//     } else if (result) {
-//       openTab.updateOne(
-//         {
-//           url: urlData.url,
-//         },
-//         {
-//           time: urlData.time,
-//           open_tab_status: urlData.open_tab_status,
-//         },
-//         (err, result) => {
-//           if (err) {
-//             res.status(500).send({
-//               code: 500,
-//               status: "Internal Server Error",
-//               message: "Failed to connect to database to update URL data",
-//             });
-//           } else {
-//             res.status(200).send({
-//               code: 200,
-//               status: "Success",
-//               message: "URL Data updated Successfully",
-//               data: result,
-//             });
-//           }
-//         }
-//       );
-//     }
-//   });
-// });
-
-app.post("/api/opentab", (req, res) => {
-  let urlData = req.body;
-  // console.log(urlData)
-  if (!Object.keys(urlData).length) {
-    res.status(400).send({
-      code: 400,
-      status: "Bad Request",
-      message: "Please send some Valid Data",
-    });
-    return;
-  }
-
-  fs.writeFile("./text/url.txt", JSON.stringify(urlData), (err) => {
-    if (err) {
-      res.status(500).send({
-        code: 500,
-        status: "Internal Server Error",
-        message: "Failed to send URL data",
-      });
-      return;
-    }
-    res.send({
-      code: 200,
-      status: "Success",
-      message: "Data Saved Successfully",
-      data: urlData,
-    });
-  });
-});
-
-// Get UrlData
-// app.get("/api/opentab", (req, res) => {
-//   const url = req.query.url;
-//   openTab.findOne({ url: url }, (err, result) => {
-//     if (err) {
-//       res.status(500).send({
-//         code: 500,
-//         status: "Internal Server Error",
-//         message: "Not able to connect with database",
-//       });
-//     } else if (!result) {
-//       res.status(404).send({
-//         code: 404,
-//         status: "Not Found",
-//         message: "Url Data not found in database",
-//       });
-//     } else {
-//       res.status(200).send({
-//         code: 200,
-//         status: "Success",
-//         message: "Url Data fetched Successfully",
-//         data: result,
-//       });
-//     }
-//   });
-// });
-
-app.get("/api/opentab", (req, res) => {
-  fs.readFile("./text/url.txt", "utf-8", (err, urlData) => {
-    if (err) {
-      res.status(500).send({
-        code: 500,
-        status: "Internal Server Error",
-        message: "Failed to read URL data",
-      });
-      return;
-    }
-    if (!urlData) {
-      res.status(400).send({
-        code: 400,
-        status: "Bad Request",
-        message: "UrlData is not Availble, file is empty",
-      });
-      return;
-    }
-    res.status(200).send({
-      code: 200,
-      status: "Success",
-      message: "Url Data Fetched Successfully",
-      data: JSON.parse(urlData),
-    });
-  });
-});
-
-// Default Settings
-
-app.post("/api/defaultsettings", (req, res) => {
-  let data = req.body;
-  // console.log(urlData)
-  if (!Object.keys(data).length) {
-    res.status(400).send({
-      code: 400,
-      status: "Bad Request",
-      message: "Please send some Valid Data",
-    });
-    return;
-  }
-
-  fs.writeFile("./text/default.txt", JSON.stringify(data), (err) => {
-    if (err) {
-      res.status(500).send({
-        code: 500,
-        status: "Internal Server Error",
-        message: "Failed to send Default Settings Data",
-      });
-      return;
-    }
-    res.send({
-      code: 200,
-      status: "Success",
-      message: "Default Settings Data send Successfully",
-      data: data,
-    });
-  });
-});
-
-//Get Default settings Data
-app.get("/api/defaultsettings", (req, res) => {
-  fs.readFile("./text/default.txt", "utf-8", (err, data) => {
-    if (err) {
-      res.status(500).send({
-        code: 500,
-        status: "Internal Server Error",
-        message: "Failed to read URL data",
-      });
-      return;
-    }
-    if (!data) {
-      res.status(400).send({
-        code: 400,
-        status: "Bad Request",
-        message: "Default Settings Data is not Availble, file is empty",
-      });
-      return;
-    }
-    res.status(200).send({
-      code: 200,
-      status: "Success",
-      message: "Default Settings Data Fetched Successfully",
-      data: JSON.parse(data),
-    });
-  });
-});
+// Version Control
+const versionControlRoute = require("./routes/versioncontrol.route");
+app.use("/", versionControlRoute);
 
 // Get all details
+const allDetailsRoute = require("./routes/allDetails.route");
+app.use("/", allDetailsRoute);
 
-app.get("/api/getDetails", (req, res) => {
-  const data1 = fs.readFileSync("./html/1.html", "utf-8");
-  const header = data1.replace(/<\/?(html)[^>]*>/gi, "").trim();
-  const header_status = fs.readFileSync("./text/header_status.txt", "utf8");
-  const data2 = fs.readFileSync("./html/2.html", "utf-8");
-  const footer = data2.replace(/<\/?(html)[^>]*>/gi, "").trim();
-  const footer_status = fs.readFileSync("./text/footer_status.txt", "utf8");
-  const urlData = fs.readFileSync("./text/url.txt", "utf8");
-  const defaultsettings = fs.readFileSync("./text/default.txt", "utf8");
+// Image Upload
+const imageUploadRoute = require("./routes/imageupload.route");
+app.use("/", imageUploadRoute);
 
-  if (!header && !footer && !urlData && !defaultsettings) {
-    res.status(404).send({
-      code: 404,
-      status: "Not Found",
-      header_status: JSON.parse(header_status),
-      header_text: "header data is not available",
-      footer_status: JSON.parse(footer_status),
-      footer_text: "footer data is not available",
-      open_tab_data: "urlData is not available",
-      default_settings_data: "Default Settings Data is not available",
-    });
-  } else if (header && footer && urlData && defaultsettings)
-    res.status(200).send({
-      code: 200,
-      status: "Success",
-      header_footer_data: {
-        header_status: JSON.parse(header_status),
-        header_text: header,
-        footer_status: JSON.parse(footer_status),
-        footer_text: footer,
-      },
-      open_tab_data: JSON.parse(urlData),
-      default_settings_data: JSON.parse(defaultsettings),
-    });
-});
+// Login
+const loginRoutes = require("./routes/login.route");
+app.use("/", loginRoutes);
 
-// Image Upload on S3 bucket
+// Installed Reports
+const installedReportsRoutes = require("./routes/installedReports.route");
+app.use("/", installedReportsRoutes);
 
-// const AWS = require("aws-sdk");
-// AWS.config.update({
-//   accessKeyId: "YOUR_ACCESS_KEY_ID",
-//   secretAccessKey: "YOUR_SECRET_ACCESS_KEY",
-// });
-// const s3 = new AWS.S3();
+// Tray Add Text
+const trayAddTextRoutes = require("./routes/traytextadd.route");
+app.use("/", trayAddTextRoutes);
 
-// const multer = require("multer");
+// Tray Banner
+const trayBannerRoutes = require("./routes/traybanner.route");
+app.use("/", trayBannerRoutes);
 
-// const storage = multer.memoryStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, `${Date.now().toString()}-${file.originalname}`);
-//   },
-// });
+//InstallExe
+const installExeRoutes = require("./routes/installexe.route");
+app.use("/", installExeRoutes);
 
-// const upload = multer({ storage: storage }).single("image");
+// Port
+const port = process.env.PORT;
 
-// app.post("/api/upload", upload, (req, res) => {
-//   const file = req.file;
-
-//   const params = {
-//     Bucket: "YOUR_BUCKET_NAME",
-//     Key: file.filename,
-//     Body: file.buffer,
-//   };
-
-//   s3.upload(params, (error, data) => {
-//     if (error) {
-//       console.log(error);
-//       return res.status(500).send({
-//         code: 500,
-//         status: "Internal Server Error",
-//         message: "Not able to upload image, Please try again.",
-//       });
-//     }
-//     console.log(data);
-//     return res.status(200).send({
-//       code: 200,
-//       status: "Success",
-//       message: "Image has been uploaded",
-//       data: data,
-//     });
-//   });
-// });
-
-//Image Upload on Local Disk
-
-const multer = require("multer");
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./images/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
-
-app.post("/api/upload", upload.single("image"), (req, res) => {
-  const file = req.file;
-  if (!file) {
-    res.status(400).send({
-      code: 400,
-      status: "Bad Request",
-      message: "Please select an image to upload.",
-    });
-  } else {
-    res.send({
-      code: 200,
-      status: "Success",
-      message: "Image has been uploaded",
-      fileName: `${file.filename}`,
-    });
-  }
-});
-
-// Get Installed Reports
-
-const macUserId = require("./models/mac-id");
-
-app.get("/installedreports", (req, res) => {
-  const macId = req.body.macId; // get the user id from the query string
-  let count = 1; // initialize the count to 1
-
-  macUserId.findOne({ macId: macId }, (err, user) => {
-    if (err) {
-      res.status(500).send("Error finding user");
-    }
-    if (user) {
-      count = user.count;
-      count++;
-      res.send(`User ${macId} has visited the API ${count} times.`);
-    }
-    if (!user) {
-      // the user does not exist, so create a new user and set the count to 1
-      const newUser = new macUserId({ macId: macId, count });
-      console.log(newUser);
-      newUser.save((err) => {
-        if (err) {
-          // handle the error
-          return res.status(500).send("Error saving user");
-        } else {
-          res.send("user added");
-        }
-      });
-    }
-  });
-});
-
-//Login
-
-const jwt = require("jsonwebtoken");
-app.use(express.json());
-
-const SECRET_KEY = "yoursecretkey";
-
-const users = [
-  {
-    userId: 1,
-    username: "user1",
-    password: "password1",
-  },
-  {
-    userId: 2,
-    username: "user2",
-    password: "password2",
-  },
-];
-
-// Route to handle login
-app.post("/api/login", (req, res) => {
-  const { username, password } = req.body;
-
-  // Check if user exists
-  const user = users.find(
-    (u) => u.username === username && u.password === password
-  );
-  if (!user) {
-    return res.status(401).send({
-      code: 401,
-      status: "Unauthorized",
-      message: "Incorrect username or password",
-    });
-  }
-  // Create JWT token
-  const token = jwt.sign({ userId: user.userId }, SECRET_KEY, {
-    expiresIn: "1h",
-  });
-  // Return token in response
-  res.send({
-    code: 200,
-    status: "Success",
-    message: "User LoggedIn Successfully",
-    userId: user.userId,
-    token,
-  });
-});
-
-// const jwt = require("jsonwebtoken");
-// const secretKey = "your-secret-key";
-// const User = require("./models/login_model");
-
-// app.post("/api/login", (req, res) => {
-//   User.findOne({ username: req.body.username }, (error, user) => {
-//     if (error) {
-//       res.status(500).send({
-//         code: 500,
-//         status: "Internal Server Error",
-//         message: "Not able to find User",
-//       });
-//     } else if (!user) {
-//       const newUser = new User({
-//         username: req.body.username,
-//         password: req.body.password,
-//       });
-//       newUser.save((error) => {
-//         if (error) {
-//           res.status(500).send(error);
-//         } else {
-//           const token = jwt.sign({ id: newUser._id }, secretKey, {
-//             expiresIn: "1h",
-//           });
-//           res.status(200).send({
-//             code: 200,
-//             status: "Success",
-//             message: "User Created Successfully",
-//             userId: newUser._id,
-//             token,
-//           });
-//         }
-//       });
-//     } else if (
-//       user.username == req.body.username &&
-//       user.password !== req.body.password
-//     ) {
-//       res.status(401).send({
-//         code: 401,
-//         status: "Unauthorized",
-//         message: "Incorrect Password",
-//       });
-//     } else if (
-//       user.username === req.body.username &&
-//       user.password === req.body.password
-//     ) {
-//       const token = jwt.sign({ id: user._id }, secretKey, {
-//         expiresIn: "1h",
-//       });
-//       res.status(200).send({
-//         code: 200,
-//         status: "Success",
-//         message: "User LoggedIn Successfully",
-//         userId: user._id,
-//         token,
-//       });
-//     }
-//   });
-// });
-
-const port = process.env.PORT || 3000;
+// Server Initialisation
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const openTabSchema = new mongoose.Schema({
+  urlId:{
+    type: Number
+  },
   url: {
     type: String,
   },

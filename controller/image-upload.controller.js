@@ -1,3 +1,35 @@
+//Image Upload on Local Disk
+
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./images/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
+
+exports.upload = upload.single("image"), (req, res) => {
+  const file = req.file;
+  if (!file) {
+    res.status(400).send({
+      code: 400,
+      status: "Bad Request",
+      message: "Please select an image to upload.",
+    });
+  } else {
+    res.send({
+      code: 200,
+      status: "Success",
+      message: "Image has been uploaded",
+      fileName: `${file.filename}`,
+    });
+  }
+};
+
 // Image Upload on S3 bucket
 
 // const AWS = require("aws-sdk");
@@ -47,35 +79,3 @@
 //     });
 //   });
 // });
-
-//Image Upload on Local Disk
-
-const multer = require("multer");
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./images/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
-
-app.post("/api/upload", upload.single("image"), (req, res) => {
-  const file = req.file;
-  if (!file) {
-    res.status(400).send({
-      code: 400,
-      status: "Bad Request",
-      message: "Please select an image to upload.",
-    });
-  } else {
-    res.send({
-      code: 200,
-      status: "Success",
-      message: "Image has been uploaded",
-      fileName: `${file.filename}`,
-    });
-  }
-});

@@ -1,146 +1,158 @@
 // Post opentab Url Data
 
-app.post("/api/opentab", (req, res) => {
-  let urlData = req.body;
-  // console.log(urlData)
-  if (!Object.keys(urlData).length) {
-    res.status(400).send({
-      code: 400,
-      status: "Bad Request",
-      message: "Please send some Valid Data",
-    });
-    return;
-  }
+// Using Database
 
-  fs.writeFile("./text/url.txt", JSON.stringify(urlData), (err) => {
+const openTab = require("../models/opentab_model");
+
+exports.opentab = async (req, res) => {
+  const urlData = new openTab(req.body);
+
+  openTab.findOne({ urlId: urlData.urlId }, (err, result) => {
     if (err) {
       res.status(500).send({
         code: 500,
         status: "Internal Server Error",
-        message: "Failed to send URL data",
+        message: "Failed to connect with Database",
       });
-      return;
     }
-    res.send({
-      code: 200,
-      status: "Success",
-      message: "Url Data send Successfully",
-      data: urlData,
-    });
+    if (!result) {
+      const newopenTab = new openTab(urlData);
+      newopenTab.save((err, result) => {
+        if (err) {
+          res.status(500).send({
+            code: 500,
+            status: "Internal Server Error",
+            message: "Failed to Save Data in Database",
+          });
+        } else {
+          res.status(201).send({
+            code: 201,
+            status: "Created",
+            message: "Data Saved Successfully",
+            data: result,
+          });
+        }
+      });
+    } else if (result) {
+      openTab.replaceOne(
+        {
+          urlId: urlData.urlId,
+        },
+        {
+          urlId: urlData.urlId,
+          url: urlData.url,
+          time: urlData.time,
+          open_tab_status: urlData.open_tab_status,
+        },
+        (err, result) => {
+          if (err) {
+            res.status(500).send({
+              code: 500,
+              status: "Internal Server Error",
+              message: "Failed to connect to database to update Data",
+            });
+          } else {
+            res.status(200).send({
+              code: 200,
+              status: "Success",
+              message: "Data Saved Successfully",
+              data: {
+                url: urlData.url,
+                time: urlData.time,
+                open_tab_status: urlData.open_tab_status,
+                message: result,
+              },
+            });
+          }
+        }
+      );
+    }
   });
-});
+};
 
-app.get("/api/opentab", (req, res) => {
-  fs.readFile("./text/url.txt", "utf-8", (err, urlData) => {
+// Get UrlData
+
+exports.getopentab = (req, res) => {
+  openTab.findOne({}, { _id: 0, urlId: 0, __v: 0 }, (err, result) => {
     if (err) {
       res.status(500).send({
         code: 500,
         status: "Internal Server Error",
-        message: "Failed to read URL data",
+        message: "Not able to connect with database",
       });
-      return;
-    }
-    if (!urlData) {
-      res.status(400).send({
-        code: 400,
-        status: "Bad Request",
-        message: "UrlData is not Availble, file is empty",
+    } else if (!result) {
+      res.status(404).send({
+        code: 404,
+        status: "Not Found",
+        message: "Data not found in database",
       });
-      return;
+    } else {
+      res.status(200).send({
+        code: 200,
+        status: "Success",
+        message: "Data fetched Successfully",
+        data: result,
+      });
     }
-    res.status(200).send({
-      code: 200,
-      status: "Success",
-      message: "Url Data Fetched Successfully",
-      data: JSON.parse(urlData),
-    });
   });
-});
+};
 
-// const openTab = require("./models/opentab_model");
+// Using text file Method
 
-// app.post("/api/opentab", async (req, res) => {
-//   const urlData = new openTab(req.body);
+// const fs = require("fs")
 
-//   openTab.findOne({ url: urlData.url }, (err, result) => {
+// app.post("/api/opentab", (req, res) => {
+//   let urlData = req.body;
+//   if (!Object.keys(urlData).length) {
+//     res.status(400).send({
+//       code: 400,
+//       status: "Bad Request",
+//       message: "Please send some Valid Data",
+//     });
+//     return;
+//   }
+
+//   fs.writeFile("./text/url.txt", JSON.stringify(urlData), (err) => {
 //     if (err) {
 //       res.status(500).send({
 //         code: 500,
 //         status: "Internal Server Error",
-//         message: "Failed to connect with Database",
+//         message: "Failed to send URL data",
 //       });
+//       return;
 //     }
-//     if (!result) {
-//       const newopenTab = new openTab(urlData);
-//       newopenTab.save((err, result) => {
-//         if (err) {
-//           res.status(500).send({
-//             code: 500,
-//             status: "Internal Server Error",
-//             message: "Failed to save URL data in Database",
-//           });
-//         } else {
-//           res.status(201).send({
-//             code: 201,
-//             status: "Created",
-//             message: "URL data created and saved in Database Successfully",
-//             data: result,
-//           });
-//         }
-//       });
-//     } else if (result) {
-//       openTab.updateOne(
-//         {
-//           url: urlData.url,
-//         },
-//         {
-//           time: urlData.time,
-//           open_tab_status: urlData.open_tab_status,
-//         },
-//         (err, result) => {
-//           if (err) {
-//             res.status(500).send({
-//               code: 500,
-//               status: "Internal Server Error",
-//               message: "Failed to connect to database to update URL data",
-//             });
-//           } else {
-//             res.status(200).send({
-//               code: 200,
-//               status: "Success",
-//               message: "URL Data updated Successfully",
-//               data: result,
-//             });
-//           }
-//         }
-//       );
-//     }
+//     res.send({
+//       code: 200,
+//       status: "Success",
+//       message: "Data Saved Successfully",
+//       data: urlData,
+//     });
 //   });
 // });
 
-// Get UrlData
 // app.get("/api/opentab", (req, res) => {
-//   const url = req.query.url;
-//   openTab.findOne({ url: url }, (err, result) => {
+//   fs.readFile("./text/url.txt", "utf-8", (err, urlData) => {
 //     if (err) {
 //       res.status(500).send({
 //         code: 500,
 //         status: "Internal Server Error",
-//         message: "Not able to connect with database",
+//         message: "Failed to read URL data",
 //       });
-//     } else if (!result) {
-//       res.status(404).send({
-//         code: 404,
-//         status: "Not Found",
-//         message: "Url Data not found in database",
-//       });
-//     } else {
-//       res.status(200).send({
-//         code: 200,
-//         status: "Success",
-//         message: "Url Data fetched Successfully",
-//         data: result,
-//       });
+//       return;
 //     }
+//     if (!urlData) {
+//       res.status(400).send({
+//         code: 400,
+//         status: "Bad Request",
+//         message: "Data is not Availble, file is empty",
+//       });
+//       return;
+//     }
+//     res.status(200).send({
+//       code: 200,
+//       status: "Success",
+//       message: "Url Data Fetched Successfully",
+//       data: JSON.parse(urlData),
+//     });
 //   });
 // });
